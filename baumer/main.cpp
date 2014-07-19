@@ -10,11 +10,9 @@
 #include <windows.h>
 #include "FxApi.h"
 #include "FxError.h"
+#include "main.h"
 
 using namespace std;
-
-void getFormatInfo(int iLabel);
-void getCodeInfo(int iLabel, int format);
 
 int main(int argc, char const *argv[])
 {
@@ -102,6 +100,8 @@ void getFormatInfo( int iLabel )
         aImgFormat[i]->iSizeX,
         aImgFormat[i]->iSizeY,
         aImgFormat[i]->aName);
+
+		getCodeInfo(iLabel, i);
     }
 }
 

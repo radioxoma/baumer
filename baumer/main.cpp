@@ -26,7 +26,7 @@ int main(int argc, char const *argv[])
     FX_EnumerateDevices( &NumDevices );
     cout << "Total camera devices: " << NumDevices << endl;
 
-    // ask for  information of cameras
+    // ask for information of cameras
     tBOFXCAM_INFO DevInformation;
     for( int devNum = 0; devNum < NumDevices; devNum++ ) {
         FX_DeviceInfo( devNum, &DevInformation );
@@ -49,7 +49,7 @@ int main(int argc, char const *argv[])
     }
 
     // Explore camera current properties
-    tBoCameraType dcBoType;
+    tBoCameraType   dcBoType;
     tBoCameraStatus dcBoStatus;
     dcBoType.iSizeof = sizeof(dcBoType);  // Set the structure size of before usage
     dcBoStatus.iSizeof = sizeof(dcBoStatus);
@@ -95,32 +95,50 @@ void getFormatInfo( int iLabel )
     // Use the following informations of type tBoImgFormat
     for( int i = 0; i < nImgFormat; i++ )
     {
-        printf( "Format[%02d]  WxH:%04dx%04d  %s",
+        printf( "/nFormat[%02d]  WxH:%04dx%04d  %s",
         aImgFormat[i]->iFormat,
         aImgFormat[i]->iSizeX,
         aImgFormat[i]->iSizeY,
-        aImgFormat[i]->aName);
+        aImgFormat[i]->aName );
 
-		getCodeInfo(iLabel, i);
+		printf("\nBaumer Optronic IEEE1394 Camera Image Format Codes\n");
+		getCodeInfo( iLabel, aImgFormat[i]->iFormat );
+
+		printf("\nBaumer Optronic IEEE1394 Search Functionality\n");
+		getFunctInfo( iLabel, aImgFormat[i]->iFormat );
     }
 }
 
 // Get information of all supported image data coding for a special image format.
 // Capability from device through eFCAMQUERYCAP
+// 'format' is an eBOIMGCODEINF integer, received from 'tpBoImgFormat.iFormat'.
 void getCodeInfo( int iLabel, int format )
 {
     int              nImgCode;
     tpBoImgCode *    aImgCode;
-    FX_GetCapability( iLabel, BCAM_QUERYCAP_IMGCODES, format , (void**)&aImgCode, &nImgCode );
-    printf("\nBaumer Optronic IEEE1394 Camera Image Format Codes\n");
+    FX_GetCapability( iLabel, BCAM_QUERYCAP_IMGCODES, format, (void**)&aImgCode, &nImgCode );
     // Use the following informations of type tBoImgCode
     for( int i = 0; i < nImgCode; i++ )
     {
-        printf( "Code[%02d]  Bpp:%d Res:%02d Canals:%d Planes:%d",
+        printf( "\nCode[%02d]  Bpp:%d Res:%02d Canals:%d Planes:%d",
             aImgCode[i]->iCode,
             aImgCode[i]->iCanalBytes,
             aImgCode[i]->iCanalBits,
             aImgCode[i]->iCanals,
-            aImgCode[i]->iPlanes);
+            aImgCode[i]->iPlanes );
     }
+}
+
+// Get information of all supported functions (like binning) for a special image format.
+void getFunctInfo( int iLabel, int format )
+{
+	int               nCamFunction;
+	tpBoCamFunction * aCamFunction;
+	FX_GetCapability( iLabel, BCAM_QUERYCAP_CAMFUNCTIONS, format, (void**)&aCamFunction, &nCamFunction );
+	for( int i = 0; i < nCamFunction; i++ )
+	{
+		printf( "\nFunction[%02d] %s",
+			aCamFunction[i]->iFunction,
+			aCamFunction[i]->aName );
+	}	
 }

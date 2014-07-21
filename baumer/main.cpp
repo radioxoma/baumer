@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <windows.h>
+
 #include "FxApi.h"
 #include "FxError.h"
 
@@ -15,30 +16,29 @@ using namespace std;
 #define FXOK 1
 
 
-void getFormatInfo(int iLabel); // Print image size, format etc supported by device
-void getCodeInfo(int iLabel, int format); // Print more deep info about appropriate image format
-void getFunctInfo(int ilabel, int forma); // Print capabilites that can be changed
+void getFormatInfo(int iLabel);
+void getCodeInfo(int iLabel, int format);
+void getFunctInfo(int ilabel, int forma);
 
 
 int main(int argc, char const *argv[])
 {
     int fxReturn = 0;
-    int DevCount = 0;
+    int devCount = 0;
     fxReturn = FX_DeleteLabelInfo();
-    cout << "\tFX_DeleteLabelInfo\tfxReturn: " << fxReturn << endl;
+    cout << fxReturn << " FX_DeleteLabelInfo" << endl;
     fxReturn = FX_InitLibrary();
-    cout << "FX_InitLibrary load " << fxReturn << " (version " << FX_GetVersion() << ")" << endl;
+    cout << fxReturn << " FX_InitLibrary (version " << FX_GetVersion() << ")" << endl;
 
-    // ask for number of Baumer 1394 camera devices
-    fxReturn = FX_EnumerateDevices( &DevCount );
-    cout << "\tFX_EnumerateDevices\tfxReturn: " << fxReturn << endl;
-    cout << "Total camera devices present: " << DevCount << endl;
+    fxReturn = FX_EnumerateDevices( &devCount );
+    cout << fxReturn << " FX_EnumerateDevices" << endl;
+    cout << "Total Baumer 1394 camera devices present: " << devCount << endl;
 
     // ask for information of cameras
-    for( int devNum = 0; devNum < DevCount; devNum++ ) {
+    for( int devNum = 0; devNum < devCount; devNum++ ) {
         tBOFXCAM_INFO DevInformation;
         fxReturn = FX_DeviceInfo( devNum, &DevInformation );
-        cout << "\tFX_DeviceInfo\t\tfxReturn: " << fxReturn << endl;
+        cout << fxReturn << " FX_DeviceInfo" << endl;
         // identification 16 Bit used, hardware id of camera
         cout << "CamType: " << DevInformation.CamType << endl;  // FWX14, ...
         // 24 Bit used, baumer ieee id
@@ -47,23 +47,20 @@ int main(int argc, char const *argv[])
         cout << "ChipIDHi (Serial number): " << DevInformation.ChipIDHi << endl;
         // 32 Bit used, serial number of 1394 interface
         cout << "ChipIDLo (Serial number): " << DevInformation.ChipIDLo << endl;
-        // payloadsize of camera device
         cout << "Payloadsize: " << DevInformation.Payloadsize << endl;
         cout << "Speed: " << DevInformation.Speed << endl;
         cout << "DspVersion (of camera): " << DevInformation.DspVersion << endl;
         cout << "HwcVersion (of camera): " << DevInformation.HwcVersion << endl;
         cout << "CamName: " << DevInformation.CamName << endl;
 
-        // Associate device internal label with numbers from 0 up to DevCount
-        //fxReturn = FX_LabelDevice( DevInformation.CamLabel, devNum );
-        cout << "CamLabel before: " << DevInformation.CamLabel << endl;
-
-        fxReturn = FX_LabelDevice( devNum, devNum ); // The second is mine - arbitrary number
-
-        cout << "CamLabel: " << DevInformation.CamLabel
-                << " ->> associated with devNum " << devNum
-                << " fxReturn: " << fxReturn << endl;
-        cout << "CamLabel after: " << DevInformation.CamLabel << endl;
+        // All cameras enumerated from 0 up to `devCount` now. It's necessary
+        // to associate every camera device number `devNum` with an arbitrary
+        // 'label' integer (second argument). Later we would use the label as
+        // camera identifier.
+        fxReturn = FX_LabelDevice( devNum, devNum );
+        cout                                   << fxReturn
+             << " CamLabel: "                  << DevInformation.CamLabel
+             << " ->> associated with devNum " << devNum << endl;
 
         // Explore camera current properties
         tBoCameraType   dcBoType;
@@ -71,15 +68,18 @@ int main(int argc, char const *argv[])
         dcBoType.iSizeof = sizeof(dcBoType);  // Set the structure size of before usage
         dcBoStatus.iSizeof = sizeof(dcBoStatus);
 
-        FX_GetCameraInfo( 0, &dcBoType, &dcBoStatus ); // Get current status and type of camera after camera initialization.
+        fxReturn = FX_GetCameraInfo( 0, &dcBoType, &dcBoStatus ); // Get current status and type of camera after camera initialization.
         // Max sensor image frame of camera
-        cout << "\n\nszMaxWindow cx: " << dcBoType.szMaxWindow.cx << " cy: " << dcBoType.szMaxWindow.cy << endl;
-        cout << "szCamWindow cx: " << dcBoType.szCamWindow.cx << " cy: " << dcBoType.szCamWindow.cy << endl;
+        cout << "\nszMaxWindow cx: " << dcBoType.szMaxWindow.cx
+             << " cy: "              << dcBoType.szMaxWindow.cy << endl;
+        cout << "szCamWindow cx: " << dcBoType.szCamWindow.cx
+             << " cy: "            << dcBoType.szCamWindow.cy << endl;
         cout << "szCamWindowRoi bottom: " << dcBoType.szCamWindowRoi.bottom
-            << " top: "                   << dcBoType.szCamWindowRoi.top
-            << " left: "                  << dcBoType.szCamWindowRoi.left
-            << " right: "                 << dcBoType.szCamWindowRoi.right << endl;
-        cout << "Gain min " << dcBoType.vGainIoMin << " max: " << dcBoType.vGainIoMax << endl;
+             << " top: "                  << dcBoType.szCamWindowRoi.top
+             << " left: "                 << dcBoType.szCamWindowRoi.left
+             << " right: "                << dcBoType.szCamWindowRoi.right << endl;
+        cout << "Gain min " << dcBoType.vGainIoMin
+             << " max: "    << dcBoType.vGainIoMax << endl;
         // Seems like 'Cap' shows bool device capabilities.
         cout << "Is binning supported? " << dcBoType.Cap.bBinning << endl;
         cout << "Is gain supported? " << dcBoType.Cap.bGain << endl;
@@ -89,54 +89,72 @@ int main(int argc, char const *argv[])
         cout << "Current vCurAmplifFactor (gain): " << dcBoStatus.vCurAmplifFactor << endl;
         cout << "Current vBitPerPix: " << dcBoStatus.vBitPerPix << endl;
 
+        if ( DevInformation.CamLabel != -1 ) {
         fxReturn = FX_OpenCamera( devNum );
-        cout << "FX_OpenCamera\t\tfxReturn: " << fxReturn << endl;
+        cout << fxReturn << " FX_OpenCamera" << endl;
 
         getFormatInfo( devNum );
+
+        fxReturn = FX_CloseCamera( devNum );
+        cout << fxReturn << " FX_CloseCamera" << endl;
+        }
+        else
+            cout << "Something wrong with camera label: " << devNum << endl;
     }
-    FX_DeInitLibrary();
-    system("pause");
+    fxReturn = FX_DeInitLibrary();
+    system( "pause" );
     return 0;
 }
 
-// Get all supported image data formats and it's information.
-// Capability from device through eFCAMQUERYCAP
+
+/**
+ * @brief Get all supported image data formats and it's information (e.g. size).
+ * @details Get capability from device through eFCAMQUERYCAP
+ *
+ * @param iLabel Camera device label
+ */
 void getFormatInfo( int iLabel )
 {
-    int fxReturn;
-    int             nImgFormat;
-    tpBoImgFormat*  aImgFormat;
+    int fxReturn = 0;
+    int nImgFormat;
+    tpBoImgFormat* aImgFormat;
+
+    printf( "\n\nBaumer Optronic IEEE1394 Camera Image Data Format\n" );
     fxReturn = FX_GetCapability( iLabel, BCAM_QUERYCAP_IMGFORMATS, 0/*UNUSED*/, (void**)&aImgFormat, &nImgFormat );
     cout << "FX_GetCapability\t\tfxReturn: " << fxReturn << endl;
-    printf( "\nBaumer Optronic IEEE1394 Camera Image Data Format\n" );
     // Use the following informations of type tBoImgFormat
-    for( int i = 0; i < nImgFormat; i++ )
-    {
+    for( int i = 0; i < nImgFormat; i++ ) {
         printf( "Format[%02d]  WxH:%04dx%04d  %s\n",
         aImgFormat[i]->iFormat,
         aImgFormat[i]->iSizeX,
         aImgFormat[i]->iSizeY,
         aImgFormat[i]->aName );
 
-        printf("\n\nBaumer Optronic IEEE1394 Camera Image Format Codes\n");
         getCodeInfo( iLabel, aImgFormat[i]->iFormat );
-
-        printf("\n\nBaumer Optronic IEEE1394 Search Functionality\n");
         getFunctInfo( iLabel, aImgFormat[i]->iFormat );
     }
 }
 
-// Get information of all supported image data coding for a special image format.
-// Capability from device through eFCAMQUERYCAP
-// 'format' is an eBOIMGCODEINF integer, received from 'tpBoImgFormat.iFormat'.
+
+/**
+ * @brief Get information of all supported image data coding for a special
+ * image format.
+ * @details Capability from device through eFCAMQUERYCAP 'format' is an
+ * eBOIMGCODEINF integer, received from 'tpBoImgFormat.iFormat'
+ *
+ * @param iLabel Camera device label
+ * @param format
+ */
 void getCodeInfo( int iLabel, int format )
 {
-    int              nImgCode;
-    tpBoImgCode *    aImgCode;
-    FX_GetCapability( iLabel, BCAM_QUERYCAP_IMGCODES, format, (void**)&aImgCode, &nImgCode );
+    int fxReturn = 0;
+    int nImgCode;
+    tpBoImgCode* aImgCode;
+
+    printf("\n\nBaumer Optronic IEEE1394 Camera Image Format Codes\n");
+    fxReturn = FX_GetCapability( iLabel, BCAM_QUERYCAP_IMGCODES, format, (void**)&aImgCode, &nImgCode );
     // Use the following informations of type tBoImgCode
-    for( int i = 0; i < nImgCode; i++ )
-    {
+    for( int i = 0; i < nImgCode; i++ ) {
         printf( "\nCode[%02d]  Bpp:%d Res:%02d Canals:%d Planes:%d",
             aImgCode[i]->iCode,
             aImgCode[i]->iCanalBytes,
@@ -146,14 +164,24 @@ void getCodeInfo( int iLabel, int format )
     }
 }
 
-// Get information of all supported functions (like binning) for a special image format.
+
+/**
+ * @brief Print camera capabilities that can be changed
+ * @details Get information of all supported functions (like binning) for a
+ * special image format.
+ *
+ * @param iLabel Camera device label
+ * @param format
+ */
 void getFunctInfo( int iLabel, int format )
 {
-    int               nCamFunction;
-    tpBoCamFunction * aCamFunction;
-    FX_GetCapability( iLabel, BCAM_QUERYCAP_CAMFUNCTIONS, format, (void**)&aCamFunction, &nCamFunction );
-    for( int i = 0; i < nCamFunction; i++ )
-    {
+    int fxReturn = 0;
+    int nCamFunction;
+    tpBoCamFunction* aCamFunction;
+
+    printf("\n\nBaumer Optronic IEEE1394 Search Functionality\n");
+    fxReturn = FX_GetCapability( iLabel, BCAM_QUERYCAP_CAMFUNCTIONS, format, (void**)&aCamFunction, &nCamFunction );
+    for( int i = 0; i < nCamFunction; i++ ) {
         printf( "\nFunction[%02d] %s",
             aCamFunction[i]->iFunction,
             aCamFunction[i]->aName );

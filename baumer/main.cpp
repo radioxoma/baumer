@@ -69,8 +69,8 @@ int main(int argc, char const *argv[])
         dcBoStatus.iSizeof = sizeof(dcBoStatus);
 
         fxReturn = FX_GetCameraInfo( 0, &dcBoType, &dcBoStatus ); // Get current status and type of camera after camera initialization.
-        // Max sensor image frame of camera
-        cout << "\nszMaxWindow cx: " << dcBoType.szMaxWindow.cx
+        cout << "eStdImgFormat: " << dcBoType.eStdImgFormat << endl; // Important
+        cout << "szMaxWindow cx: " << dcBoType.szMaxWindow.cx
              << " cy: "              << dcBoType.szMaxWindow.cy << endl;
         cout << "szCamWindow cx: " << dcBoType.szCamWindow.cx
              << " cy: "            << dcBoType.szCamWindow.cy << endl;
@@ -85,6 +85,14 @@ int main(int argc, char const *argv[])
         cout << "Is gain supported? " << dcBoType.Cap.bGain << endl;
 
         // Status reading from camera.
+        cout << "Current image format: " << dcBoStatus.eCurImgFormat << endl;
+        printf( "Current image code[%02d]  Bpp:%d Res:%02d Canals:%d Planes:%d\n",
+            dcBoStatus.eCurImgCode.iCode,
+            dcBoStatus.eCurImgCode.iCanalBytes,
+            dcBoStatus.eCurImgCode.iCanalBits,
+            dcBoStatus.eCurImgCode.iCanals,
+            dcBoStatus.eCurImgCode.iPlanes );
+
         cout << "Current exposure time: " << dcBoStatus.vCurExposTime << endl;
         cout << "Current vCurAmplifFactor (gain): " << dcBoStatus.vCurAmplifFactor << endl;
         cout << "Current vBitPerPix: " << dcBoStatus.vBitPerPix << endl;
@@ -121,7 +129,7 @@ void getFormatInfo( int iLabel )
 
     printf( "\n\nBaumer Optronic IEEE1394 Camera Image Data Format\n" );
     fxReturn = FX_GetCapability( iLabel, BCAM_QUERYCAP_IMGFORMATS, 0/*UNUSED*/, (void**)&aImgFormat, &nImgFormat );
-    cout << "FX_GetCapability\t\tfxReturn: " << fxReturn << endl;
+    cout << fxReturn << " FX_GetCapability" << endl;
     // Use the following informations of type tBoImgFormat
     for( int i = 0; i < nImgFormat; i++ ) {
         printf( "Format[%02d]  WxH:%04dx%04d  %s\n",
@@ -155,7 +163,7 @@ void getCodeInfo( int iLabel, int format )
     fxReturn = FX_GetCapability( iLabel, BCAM_QUERYCAP_IMGCODES, format, (void**)&aImgCode, &nImgCode );
     // Use the following informations of type tBoImgCode
     for( int i = 0; i < nImgCode; i++ ) {
-        printf( "\nCode[%02d]  Bpp:%d Res:%02d Canals:%d Planes:%d",
+        printf( "Code[%02d]  Bpp:%d Res:%02d Canals:%d Planes:%d\n",
             aImgCode[i]->iCode,
             aImgCode[i]->iCanalBytes,
             aImgCode[i]->iCanalBits,

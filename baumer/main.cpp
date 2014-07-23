@@ -69,8 +69,14 @@ int main(int argc, char const *argv[])
         dcBoType.iSizeof = sizeof(dcBoType);
         dcBoStatus.iSizeof = sizeof(dcBoStatus);
 
-        fxReturn = FX_GetCameraInfo(0, &dcBoType, &dcBoStatus);
-        // Explore camera current properties
+        fxReturn = FX_OpenCamera(devNum);
+        cout << fxReturn << " FX_OpenCamera" << endl;
+        if (fxReturn == 1)
+            cout << "\n\t*** Camera successfully initialized ***\n" << endl;
+
+        // Explore camera current properties.
+        // Makes sense *only* if the camera was open.
+        fxReturn = FX_GetCameraInfo(devNum, &dcBoType, &dcBoStatus);
         // Camera 'type' reading
         cout << "eStdImgFormat: " << dcBoType.eStdImgFormat << endl;
         cout << "szMaxWindow cx: " << dcBoType.szMaxWindow.cx
@@ -91,6 +97,7 @@ int main(int argc, char const *argv[])
         // Camera status reading
         cout << "Current image format: " << dcBoStatus.eCurImgFormat << endl;
         getImageShape(devNum, dcBoStatus.eCurImgFormat);
+
         printf("Current image code[%02d] Bpp:%d Res:%02d Canals:%d Planes:%d\n",
             dcBoStatus.eCurImgCode.iCode,
             dcBoStatus.eCurImgCode.iCanalBytes,
@@ -103,17 +110,10 @@ int main(int argc, char const *argv[])
              << dcBoStatus.vCurAmplifFactor << endl;
         cout << "Current vBitPerPix: " << dcBoStatus.vBitPerPix << endl;
 
-        if (DevInformation.CamLabel != -1) {
-        fxReturn = FX_OpenCamera(devNum);
-        cout << fxReturn << " FX_OpenCamera" << endl;
-
         getFormatInfo(devNum);
 
         fxReturn = FX_CloseCamera(devNum);
         cout << fxReturn << " FX_CloseCamera" << endl;
-        }
-        else
-            cout << "Something wrong with camera label: " << devNum << endl;
     }
     fxReturn = FX_DeInitLibrary();
     system("pause");
@@ -133,13 +133,13 @@ void getFormatInfo(int iLabel)
     int nImgFormat;
     tpBoImgFormat* aImgFormat;
 
-    printf("\n\nBaumer Optronic IEEE1394 Camera Image Data Format\n");
+    printf("\n\nAvailable camera image data format\n");
     fxReturn = FX_GetCapability(iLabel, BCAM_QUERYCAP_IMGFORMATS, 0/*UNUSED*/,
         (void**)&aImgFormat, &nImgFormat);
     cout << fxReturn << " FX_GetCapability" << endl;
     // Use the following informations of type tBoImgFormat
     for(int i = 0; i < nImgFormat; i++) {
-        printf("Format[%02d]  WxH:%04dx%04d  %s\n",
+        printf("\n\n\tFormat[%02d]  WxH:%04dx%04d\n\t%s\n",
         aImgFormat[i]->iFormat,
         aImgFormat[i]->iSizeX,
         aImgFormat[i]->iSizeY,
@@ -166,7 +166,7 @@ void getCodeInfo(int iLabel, int iFormat)
     int nImgCode;
     tpBoImgCode* aImgCode;
 
-    printf("\n\nBaumer Optronic IEEE1394 Camera Image Format Codes\n");
+    printf("\nAvailable camera image Format Codes\n\n");
     fxReturn = FX_GetCapability(iLabel, BCAM_QUERYCAP_IMGCODES, iFormat,
         (void**)&aImgCode, &nImgCode);
     // Use the following informations of type tBoImgCode
@@ -195,11 +195,11 @@ void getFunctInfo(int iLabel, int iFormat)
     int nCamFunction;
     tpBoCamFunction* aCamFunction;
 
-    printf("\n\nBaumer Optronic IEEE1394 Search Functionality\n");
+    printf("\n\nBaumer Optronic IEEE1394 Search Functionality\n\n");
     fxReturn = FX_GetCapability(iLabel, BCAM_QUERYCAP_CAMFUNCTIONS, iFormat,
         (void**)&aCamFunction, &nCamFunction);
     for(int i = 0; i < nCamFunction; i++) {
-        printf("\nFunction[%02d] %s",
+        printf("Function[%02d] %s\n",
             aCamFunction[i]->iFunction,
             aCamFunction[i]->aName);
     }
@@ -207,14 +207,16 @@ void getFunctInfo(int iLabel, int iFormat)
 
 
 /**
- * @brief Get frame width and height for specifed image format.
- * @details 
+ * @brief Detect frame properties for specifed image format enum value.
+ * @details Detect frame properties (e.g. width, height) for specifed image
+ * format enum value.
  *
  * @param iLabel Camera device label
  * @param iFormat Image format number
  */
 void getImageShape(int iLabel, int iFormat)
 {
+    bool isFound = false;
     int fxReturn = 0;
     int nImgFormat;
     tpBoImgFormat* aImgFormat;
@@ -224,13 +226,15 @@ void getImageShape(int iLabel, int iFormat)
     cout << fxReturn << " FX_GetCapability" << endl;
     for(int i = 0; i < nImgFormat; i++) {
         if (iFormat == aImgFormat[i]->iFormat) {
-            printf("Current format: %02d, WxH:%04dx%04d  %s\n",
+            isFound = true;
+            printf("Format detected: %02d, WxH:%04dx%04d  %s\n",
                 aImgFormat[i]->iFormat,
                 aImgFormat[i]->iSizeX,
                 aImgFormat[i]->iSizeY,
                 aImgFormat[i]->aName);
         }
-        else
-            printf("ERROR: unknown image format.");
+    }
+    if (isFound == false) {
+        printf("Unable to found image format: %02d", iFormat);
     }
 }

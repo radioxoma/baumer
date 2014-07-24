@@ -1,9 +1,8 @@
 //============================================================================
 // Name        : baumer.cpp
-// Author      : Eugene Dvoretsky
-// Version     :
+// Author      : Eugene Dvoretsky, Vitebsk state medical university, 2014
 // Copyright   : MIT
-// Description : Baumer Hello World in C++
+// Description : Baumer camera Hello World in C++
 //============================================================================
 
 #include <iostream>

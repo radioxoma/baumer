@@ -70,7 +70,7 @@ int main(int argc, char const *argv[])
 
         fxReturn = FX_OpenCamera(devNum);
         cout << fxReturn << " FX_OpenCamera" << endl;
-        if (fxReturn == 1)
+        if (fxReturn == CE_SUCCESS)
             cout << "\n\t*** Camera successfully initialized ***\n" << endl;
 
         // Explore camera current properties.
@@ -225,12 +225,13 @@ void getImageShape(int iLabel, int iFormat)
     cout << fxReturn << " FX_GetCapability" << endl;
     for(int i = 0; i < nImgFormat; i++) {
         if (iFormat == aImgFormat[i]->iFormat) {
-            isFound = true;
             printf("Format detected: %02d, WxH:%04dx%04d  %s\n",
                 aImgFormat[i]->iFormat,
                 aImgFormat[i]->iSizeX,
                 aImgFormat[i]->iSizeY,
                 aImgFormat[i]->aName);
+            isFound = true;
+            break;
         }
     }
     if (isFound == false) {
